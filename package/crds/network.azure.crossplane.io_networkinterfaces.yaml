@@ -74,7 +74,6 @@ spec:
                           type: string
                         publicIPAddressID:
                           description: PublicIPAddressID - ID of the Network Interface's Public IP address.
-                          type: string
                         publicIPAddressIDRef:
                           description: PublicIPAddressIDRef - A reference to the the Network Interface's Public IP address.
                           properties:
