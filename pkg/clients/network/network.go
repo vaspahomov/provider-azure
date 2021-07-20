@@ -17,6 +17,7 @@ limitations under the License.
 package network
 
 import (
+	"fmt"
 	"reflect"
 
 	networkmgmt "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-06-01/network"
@@ -41,21 +42,31 @@ func NewVirtualNetworkParameters(v *v1alpha3.VirtualNetwork) networkmgmt.Virtual
 }
 
 // VirtualNetworkNeedsUpdate determines if a virtual network need to be updated
-func VirtualNetworkNeedsUpdate(kube *v1alpha3.VirtualNetwork, az networkmgmt.VirtualNetwork) bool {
+func VirtualNetworkNeedsUpdate(kube *v1alpha3.VirtualNetwork, az networkmgmt.VirtualNetwork) (bool, string) {
 	up := NewVirtualNetworkParameters(kube)
 
+	ddosProtectionBefore := azure.ToBool(az.VirtualNetworkPropertiesFormat.EnableDdosProtection)
+	ddosProtectionAfter := azure.ToBool(up.VirtualNetworkPropertiesFormat.EnableDdosProtection)
+	vmProtectionBefore := azure.ToBool(az.VirtualNetworkPropertiesFormat.EnableVMProtection)
+	vmProtectionAfter := azure.ToBool(up.VirtualNetworkPropertiesFormat.EnableVMProtection)
 	switch {
-	case !reflect.DeepEqual(up.VirtualNetworkPropertiesFormat.AddressSpace, az.VirtualNetworkPropertiesFormat.AddressSpace):
-		return true
-	case !reflect.DeepEqual(up.VirtualNetworkPropertiesFormat.EnableDdosProtection, az.VirtualNetworkPropertiesFormat.EnableDdosProtection):
-		return true
-	case !reflect.DeepEqual(up.VirtualNetworkPropertiesFormat.EnableVMProtection, az.VirtualNetworkPropertiesFormat.EnableVMProtection):
-		return true
+	case !reflect.DeepEqual(az.VirtualNetworkPropertiesFormat.AddressSpace, up.VirtualNetworkPropertiesFormat.AddressSpace):
+		msg := fmt.Sprintf("Address space updated: before '%v', after '%v'", az.VirtualNetworkPropertiesFormat.AddressSpace, up.VirtualNetworkPropertiesFormat.AddressSpace)
+		return true, msg
+	case !reflect.DeepEqual(ddosProtectionBefore, ddosProtectionAfter):
+		msg := fmt.Sprintf("Enable ddos protection updated: before '%t', after '%t'", ddosProtectionBefore, ddosProtectionAfter)
+		return true, msg
+	case !reflect.DeepEqual(vmProtectionBefore, vmProtectionAfter):
+		msg := fmt.Sprintf("Enable VM protection updated: before '%t', after '%t'", vmProtectionBefore, vmProtectionAfter)
+		return true, msg
 	case !reflect.DeepEqual(up.Tags, az.Tags):
-		return true
+		msg := fmt.Sprintf("Tags updated: before '%v', after '%v'",
+			az.Tags,
+			up.Tags)
+		return true, msg
 	}
 
-	return false
+	return false, "Up to date"
 }
 
 // UpdateVirtualNetworkStatusFromAzure updates the status related to the external

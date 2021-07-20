@@ -260,7 +260,7 @@ func TestVirtualNetworkNeedsUpdate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := VirtualNetworkNeedsUpdate(tc.kube, tc.az)
+			got, _ := VirtualNetworkNeedsUpdate(tc.kube, tc.az)
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("VirtualNetworkNeedsUpdate(...): -want, +got\n%s", diff)
 			}

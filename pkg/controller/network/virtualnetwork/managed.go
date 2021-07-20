@@ -52,7 +52,7 @@ const (
 // Setup adds a controller that reconciles VirtualNetworks.
 func Setup(mgr ctrl.Manager, l logging.Logger, rl workqueue.RateLimiter) error {
 	name := managed.ControllerName(v1alpha3.VirtualNetworkGroupKind)
-
+	l = l.WithValues("controller", name)
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		WithOptions(controller.Options{
@@ -62,14 +62,15 @@ func Setup(mgr ctrl.Manager, l logging.Logger, rl workqueue.RateLimiter) error {
 		Complete(managed.NewReconciler(mgr,
 			resource.ManagedKind(v1alpha3.VirtualNetworkGroupVersionKind),
 			managed.WithConnectionPublishers(),
-			managed.WithExternalConnecter(&connecter{client: mgr.GetClient()}),
+			managed.WithExternalConnecter(&connecter{client: mgr.GetClient(), l: l}),
 			managed.WithReferenceResolver(managed.NewAPISimpleReferenceResolver(mgr.GetClient())),
-			managed.WithLogger(l.WithValues("controller", name)),
+			managed.WithLogger(l),
 			managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name)))))
 }
 
 type connecter struct {
 	client client.Client
+	l      logging.Logger
 }
 
 func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
@@ -79,11 +80,12 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	}
 	cl := azurenetwork.NewVirtualNetworksClient(creds[azureclients.CredentialsKeySubscriptionID])
 	cl.Authorizer = auth
-	return &external{client: cl}, nil
+	return &external{client: cl, l: c.l}, nil
 }
 
 type external struct {
 	client networkapi.VirtualNetworksClientAPI
+	l      logging.Logger
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -104,9 +106,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	v.SetConditions(xpv1.Available())
 
+	needUpdate, msg := network.VirtualNetworkNeedsUpdate(v, az)
+	e.l.Debug(msg)
 	o := managed.ExternalObservation{
 		ResourceExists:    true,
 		ConnectionDetails: managed.ConnectionDetails{},
+		ResourceUpToDate:  !needUpdate,
 	}
 
 	return o, nil
@@ -134,17 +139,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotVirtualNetwork)
 	}
 
-	az, err := e.client.Get(ctx, v.Spec.ResourceGroupName, meta.GetExternalName(v), "")
-	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errGetVirtualNetwork)
+	vnet := network.NewVirtualNetworkParameters(v)
+	if _, err := e.client.CreateOrUpdate(ctx, v.Spec.ResourceGroupName, meta.GetExternalName(v), vnet); err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateVirtualNetwork)
 	}
 
-	if network.VirtualNetworkNeedsUpdate(v, az) {
-		vnet := network.NewVirtualNetworkParameters(v)
-		if _, err := e.client.CreateOrUpdate(ctx, v.Spec.ResourceGroupName, meta.GetExternalName(v), vnet); err != nil {
-			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateVirtualNetwork)
-		}
-	}
 	return managed.ExternalUpdate{}, nil
 }
 
