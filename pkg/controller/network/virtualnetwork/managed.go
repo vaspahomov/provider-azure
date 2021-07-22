@@ -104,9 +104,13 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	v.SetConditions(xpv1.Available())
 
+	needsUpdate, diff := network.VirtualNetworkNeedsUpdate(v, az)
+
 	o := managed.ExternalObservation{
 		ResourceExists:    true,
 		ConnectionDetails: managed.ConnectionDetails{},
+		ResourceUpToDate:  !needsUpdate,
+		Diff:              diff,
 	}
 
 	return o, nil
@@ -134,16 +138,9 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotVirtualNetwork)
 	}
 
-	az, err := e.client.Get(ctx, v.Spec.ResourceGroupName, meta.GetExternalName(v), "")
-	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errGetVirtualNetwork)
-	}
-
-	if network.VirtualNetworkNeedsUpdate(v, az) {
-		vnet := network.NewVirtualNetworkParameters(v)
-		if _, err := e.client.CreateOrUpdate(ctx, v.Spec.ResourceGroupName, meta.GetExternalName(v), vnet); err != nil {
-			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateVirtualNetwork)
-		}
+	vnet := network.NewVirtualNetworkParameters(v)
+	if _, err := e.client.CreateOrUpdate(ctx, v.Spec.ResourceGroupName, meta.GetExternalName(v), vnet); err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateVirtualNetwork)
 	}
 	return managed.ExternalUpdate{}, nil
 }
