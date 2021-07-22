@@ -42,7 +42,7 @@ import (
 const (
 	// AgentPoolProfileName is a format string for the name of the automatically
 	// created cluster agent pool profile
-	AgentPoolProfileName = "agentpool"
+	AgentPoolProfileName = "agentpool%s"
 
 	// NetworkContributorRoleID lets the AKS cluster managed networks, but not
 	// access them.
@@ -264,10 +264,26 @@ func (c AggregateClient) deleteApplication(ctx context.Context, name string) err
 	return nil
 }
 
-func newManagedCluster(c *v1alpha3.AKSCluster, appID, secret string) containerservice.ManagedCluster {
+func newAgentPool(p *v1alpha3.AKSAgentPoolParameters) containerservice.ManagedClusterAgentPoolProfile {
 	nodeCount := int32(v1alpha3.DefaultNodeCount)
-	if c.Spec.NodeCount != nil {
-		nodeCount = int32(*c.Spec.NodeCount)
+	if p.NodeCount != nil {
+		nodeCount = int32(*p.NodeCount)
+	}
+	az := containerservice.ManagedClusterAgentPoolProfile{
+		Name:   to.StringPtr(p.Name),
+		Count:  &nodeCount,
+		VMSize: containerservice.VMSizeTypes(p.NodeVMSize),
+	}
+	if p.VnetSubnetID != "" {
+		az.VnetSubnetID = to.StringPtr(p.VnetSubnetID)
+	}
+	return az
+}
+
+func newManagedCluster(c *v1alpha3.AKSCluster, appID, secret string) containerservice.ManagedCluster {
+	agentPools := make([]containerservice.ManagedClusterAgentPoolProfile, len(c.Spec.AgentPools))
+	for i, pool := range c.Spec.AgentPools {
+		agentPools[i] = newAgentPool(pool)
 	}
 
 	p := containerservice.ManagedCluster{
@@ -276,13 +292,7 @@ func newManagedCluster(c *v1alpha3.AKSCluster, appID, secret string) containerse
 		ManagedClusterProperties: &containerservice.ManagedClusterProperties{
 			KubernetesVersion: to.StringPtr(c.Spec.Version),
 			DNSPrefix:         to.StringPtr(c.Spec.DNSNamePrefix),
-			AgentPoolProfiles: &[]containerservice.ManagedClusterAgentPoolProfile{
-				{
-					Name:   to.StringPtr(AgentPoolProfileName),
-					Count:  &nodeCount,
-					VMSize: containerservice.VMSizeTypes(c.Spec.NodeVMSize),
-				},
-			},
+			AgentPoolProfiles: &agentPools,
 			ServicePrincipalProfile: &containerservice.ManagedClusterServicePrincipalProfile{
 				ClientID: to.StringPtr(appID),
 				Secret:   to.StringPtr(secret),
@@ -291,16 +301,14 @@ func newManagedCluster(c *v1alpha3.AKSCluster, appID, secret string) containerse
 		},
 	}
 
-	if c.Spec.VnetSubnetID != "" {
-		p.ManagedClusterProperties.NetworkProfile = &containerservice.NetworkProfile{NetworkPlugin: containerservice.Azure}
-		p.ManagedClusterProperties.AgentPoolProfiles = &[]containerservice.ManagedClusterAgentPoolProfile{
-			{
-				Name:         to.StringPtr(AgentPoolProfileName),
-				Count:        &nodeCount,
-				VMSize:       containerservice.VMSizeTypes(c.Spec.NodeVMSize),
-				VnetSubnetID: to.StringPtr(c.Spec.VnetSubnetID),
-			},
+	needAzureNetworkPlugin := c.Spec.VnetSubnetID != ""
+	for _, pool := range c.Spec.AgentPools {
+		if pool.VnetSubnetID != "" {
+			needAzureNetworkPlugin = true
 		}
+	}
+	if needAzureNetworkPlugin {
+		p.ManagedClusterProperties.NetworkProfile = &containerservice.NetworkProfile{NetworkPlugin: containerservice.Azure}
 	}
 
 	return p

@@ -27,6 +27,35 @@ const (
 	DefaultNodeCount = 1
 )
 
+// AKSAgentPoolParameters define the desired state of an Azure Kubernetes cluster NodePool.
+type AKSAgentPoolParameters struct {
+	// Name is the name of AKS AgentPool.
+	Name string `json:"name"`
+
+	// VnetSubnetID is the subnet to which the cluster will be deployed.
+	// +optional
+	VnetSubnetID string `json:"vnetSubnetID,omitempty"`
+
+	// ResourceGroupNameRef - A reference to a Subnet to retrieve its ID
+	VnetSubnetIDRef *xpv1.Reference `json:"vnetSubnetIDRef,omitempty"`
+
+	// ResourceGroupNameSelector - Select a reference to a Subnet to retrieve
+	// its ID
+	VnetSubnetIDSelector *xpv1.Selector `json:"vnetSubnetIDSelector,omitempty"`
+
+	// NodeCount is the number of nodes that the cluster will initially be
+	// created with.  This can be scaled over time and defaults to 1.
+	// +kubebuilder:validation:Maximum=100
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	NodeCount *int `json:"nodeCount,omitempty"`
+
+	// NodeVMSize is the name of the worker node VM size, e.g., Standard_B2s,
+	// Standard_F2s_v2, etc.
+	// +optional
+	NodeVMSize string `json:"nodeVMSize"`
+}
+
 // AKSClusterParameters define the desired state of an Azure Kubernetes Engine
 // cluster.
 type AKSClusterParameters struct {
@@ -59,17 +88,8 @@ type AKSClusterParameters struct {
 	// its ID
 	VnetSubnetIDSelector *xpv1.Selector `json:"vnetSubnetIDSelector,omitempty"`
 
-	// NodeCount is the number of nodes that the cluster will initially be
-	// created with.  This can be scaled over time and defaults to 1.
-	// +kubebuilder:validation:Maximum=100
-	// +kubebuilder:validation:Minimum=0
-	// +optional
-	NodeCount *int `json:"nodeCount,omitempty"`
-
-	// NodeVMSize is the name of the worker node VM size, e.g., Standard_B2s,
-	// Standard_F2s_v2, etc.
-	// +optional
-	NodeVMSize string `json:"nodeVMSize"`
+	// List of AKSCluster AgentPools
+	AgentPools []*AKSAgentPoolParameters `json:"agent_pools"`
 
 	// DNSNamePrefix is the DNS name prefix to use with the hosted Kubernetes
 	// API server FQDN. You will use this to connect to the Kubernetes API when
