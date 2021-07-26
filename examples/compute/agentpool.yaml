@@ -1,0 +1,17 @@
+apiVersion: compute.azure.crossplane.io/v1alpha3
+kind: AgentPool
+metadata:
+  name: example-agentpool
+  labels:
+    example: "true"
+spec:
+  resourceGroupNameRef:
+    name: example-rg
+  vnetSubnetIDRef:
+    name: example-sub
+  aksClusterNameRef:
+    name: example-akscluster
+  nodeCount: 1
+  nodeVMSize: Standard_B2s
+  providerConfigRef:
+    name: example

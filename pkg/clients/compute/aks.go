@@ -23,7 +23,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/authorization/mgmt/2015-07-01/authorization"
 	authorizationmgmt "github.com/Azure/azure-sdk-for-go/services/authorization/mgmt/2015-07-01/authorization"
-	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2018-03-31/containerservice"
+	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice"
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
@@ -265,10 +265,6 @@ func (c AggregateClient) deleteApplication(ctx context.Context, name string) err
 }
 
 func newManagedCluster(c *v1alpha3.AKSCluster, appID, secret string) containerservice.ManagedCluster {
-	nodeCount := int32(v1alpha3.DefaultNodeCount)
-	if c.Spec.NodeCount != nil {
-		nodeCount = int32(*c.Spec.NodeCount)
-	}
 
 	p := containerservice.ManagedCluster{
 		Name:     to.StringPtr(meta.GetExternalName(c)),
@@ -277,11 +273,7 @@ func newManagedCluster(c *v1alpha3.AKSCluster, appID, secret string) containerse
 			KubernetesVersion: to.StringPtr(c.Spec.Version),
 			DNSPrefix:         to.StringPtr(c.Spec.DNSNamePrefix),
 			AgentPoolProfiles: &[]containerservice.ManagedClusterAgentPoolProfile{
-				{
-					Name:   to.StringPtr(AgentPoolProfileName),
-					Count:  &nodeCount,
-					VMSize: containerservice.VMSizeTypes(c.Spec.NodeVMSize),
-				},
+				newManagedClusterAgentPoolProfile(c),
 			},
 			ServicePrincipalProfile: &containerservice.ManagedClusterServicePrincipalProfile{
 				ClientID: to.StringPtr(appID),
@@ -292,15 +284,7 @@ func newManagedCluster(c *v1alpha3.AKSCluster, appID, secret string) containerse
 	}
 
 	if c.Spec.VnetSubnetID != "" {
-		p.ManagedClusterProperties.NetworkProfile = &containerservice.NetworkProfile{NetworkPlugin: containerservice.Azure}
-		p.ManagedClusterProperties.AgentPoolProfiles = &[]containerservice.ManagedClusterAgentPoolProfile{
-			{
-				Name:         to.StringPtr(AgentPoolProfileName),
-				Count:        &nodeCount,
-				VMSize:       containerservice.VMSizeTypes(c.Spec.NodeVMSize),
-				VnetSubnetID: to.StringPtr(c.Spec.VnetSubnetID),
-			},
-		}
+		p.ManagedClusterProperties.NetworkProfile = &containerservice.NetworkProfileType{NetworkPlugin: containerservice.Azure}
 	}
 
 	return p
