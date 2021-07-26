@@ -10,7 +10,7 @@ You may obtain a copy of the License at
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the c.Specific language governing permissions and
+See the License for the specific language governing permissions and
 limitations under the License.
 */
 
@@ -21,9 +21,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/crossplane/provider-azure/pkg/clients/compute/consts"
+
+	"github.com/crossplane/provider-azure/pkg/clients/compute/agentpool"
+
 	"github.com/Azure/azure-sdk-for-go/services/authorization/mgmt/2015-07-01/authorization"
 	authorizationmgmt "github.com/Azure/azure-sdk-for-go/services/authorization/mgmt/2015-07-01/authorization"
-	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2018-03-31/containerservice"
+	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice"
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
@@ -37,18 +41,6 @@ import (
 
 	"github.com/crossplane/provider-azure/apis/compute/v1alpha3"
 	azure "github.com/crossplane/provider-azure/pkg/clients"
-)
-
-const (
-	// AgentPoolProfileName is a format string for the name of the automatically
-	// created cluster agent pool profile
-	AgentPoolProfileName = "agentpool"
-
-	// NetworkContributorRoleID lets the AKS cluster managed networks, but not
-	// access them.
-	NetworkContributorRoleID = "/providers/Microsoft.Authorization/roleDefinitions/4d97b98b-1d4f-4787-a291-c67834d212e7"
-
-	appCredsValidYears = 5
 )
 
 // An AKSClient can create, read, and delete AKS clusters and the various other
@@ -130,7 +122,7 @@ func (c AggregateClient) EnsureManagedCluster(ctx context.Context, ac *v1alpha3.
 		return err
 	}
 
-	if err := c.ensureRoleAssignment(ctx, to.String(sp.ObjectID), NetworkContributorRoleID, ac.Spec.VnetSubnetID); err != nil {
+	if err := c.ensureRoleAssignment(ctx, to.String(sp.ObjectID), consts.NetworkContributorRoleID, ac.Spec.VnetSubnetID); err != nil {
 		return err
 	}
 
@@ -265,10 +257,6 @@ func (c AggregateClient) deleteApplication(ctx context.Context, name string) err
 }
 
 func newManagedCluster(c *v1alpha3.AKSCluster, appID, secret string) containerservice.ManagedCluster {
-	nodeCount := int32(v1alpha3.DefaultNodeCount)
-	if c.Spec.NodeCount != nil {
-		nodeCount = int32(*c.Spec.NodeCount)
-	}
 
 	p := containerservice.ManagedCluster{
 		Name:     to.StringPtr(meta.GetExternalName(c)),
@@ -277,11 +265,7 @@ func newManagedCluster(c *v1alpha3.AKSCluster, appID, secret string) containerse
 			KubernetesVersion: to.StringPtr(c.Spec.Version),
 			DNSPrefix:         to.StringPtr(c.Spec.DNSNamePrefix),
 			AgentPoolProfiles: &[]containerservice.ManagedClusterAgentPoolProfile{
-				{
-					Name:   to.StringPtr(AgentPoolProfileName),
-					Count:  &nodeCount,
-					VMSize: containerservice.VMSizeTypes(c.Spec.NodeVMSize),
-				},
+				agentpool.NewProfile(c),
 			},
 			ServicePrincipalProfile: &containerservice.ManagedClusterServicePrincipalProfile{
 				ClientID: to.StringPtr(appID),
@@ -292,15 +276,7 @@ func newManagedCluster(c *v1alpha3.AKSCluster, appID, secret string) containerse
 	}
 
 	if c.Spec.VnetSubnetID != "" {
-		p.ManagedClusterProperties.NetworkProfile = &containerservice.NetworkProfile{NetworkPlugin: containerservice.Azure}
-		p.ManagedClusterProperties.AgentPoolProfiles = &[]containerservice.ManagedClusterAgentPoolProfile{
-			{
-				Name:         to.StringPtr(AgentPoolProfileName),
-				Count:        &nodeCount,
-				VMSize:       containerservice.VMSizeTypes(c.Spec.NodeVMSize),
-				VnetSubnetID: to.StringPtr(c.Spec.VnetSubnetID),
-			},
-		}
+		p.ManagedClusterProperties.NetworkProfile = &containerservice.NetworkProfileType{NetworkPlugin: containerservice.Azure}
 	}
 
 	return p
@@ -310,7 +286,7 @@ func newPasswordCredential(secret string) (graphrbac.PasswordCredential, error) 
 	keyID, err := uuid.NewRandom()
 	return graphrbac.PasswordCredential{
 		StartDate: &date.Time{Time: time.Now()},
-		EndDate:   &date.Time{Time: time.Now().AddDate(appCredsValidYears, 0, 0)},
+		EndDate:   &date.Time{Time: time.Now().AddDate(consts.AppCredsValidYears, 0, 0)},
 		KeyID:     to.StringPtr(keyID.String()),
 		Value:     to.StringPtr(secret),
 	}, err

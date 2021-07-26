@@ -20,6 +20,8 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	"github.com/crossplane/provider-azure/pkg/controller/compute/agentpool"
+
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 
 	"github.com/crossplane/provider-azure/pkg/controller/cache"
@@ -45,6 +47,7 @@ func Setup(mgr ctrl.Manager, l logging.Logger, rl workqueue.RateLimiter) error {
 		config.Setup,
 		cache.SetupRedis,
 		compute.SetupAKSCluster,
+		agentpool.SetupAgentPool,
 		mysqlserver.Setup,
 		mysqlserverfirewallrule.Setup,
 		mysqlservervirtualnetworkrule.Setup,
