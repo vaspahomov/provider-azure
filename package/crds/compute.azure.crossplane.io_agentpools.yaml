@@ -6,18 +6,18 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.0
   creationTimestamp: null
-  name: mysqlserverfirewallrules.database.azure.crossplane.io
+  name: agentpools.compute.azure.crossplane.io
 spec:
-  group: database.azure.crossplane.io
+  group: compute.azure.crossplane.io
   names:
     categories:
     - crossplane
     - managed
     - azure
-    kind: MySQLServerFirewallRule
-    listKind: MySQLServerFirewallRuleList
-    plural: mysqlserverfirewallrules
-    singular: mysqlserverfirewallrule
+    kind: AgentPool
+    listKind: AgentPoolList
+    plural: agentpools
+    singular: agentpool
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -27,8 +27,8 @@ spec:
     - jsonPath: .status.conditions[?(@.type=='Synced')].status
       name: SYNCED
       type: string
-    - jsonPath: .status.state
-      name: STATE
+    - jsonPath: .spec.location
+      name: LOCATION
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: AGE
@@ -36,8 +36,7 @@ spec:
     name: v1alpha3
     schema:
       openAPIV3Schema:
-        description: A MySQLServerFirewallRule is a managed resource that represents
-          an Azure MySQL firewall rule.
+        description: An AgentPool is a managed resource that represents an Azure AgentPool.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -52,9 +51,37 @@ spec:
           metadata:
             type: object
           spec:
-            description: A FirewallRuleSpec defines the desired state of an Azure
-              SQL firewall rule.
+            description: An AgentPoolSpec defines the desired state of a AKSCluster.
             properties:
+              aksClusterName:
+                description: AKSClusterName is the name of the AKSCluster that the
+                  cluster will be created in
+                type: string
+              aksClusterNameRef:
+                description: AKSClusterNameRef - A reference to a AKSCluster to retrieve
+                  its id
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                required:
+                - name
+                type: object
+              aksClusterNameSelector:
+                description: AKSClusterNameSelector - Select a reference to a AKSCluster
+                  to retrieve its ids
+                properties:
+                  matchControllerRef:
+                    description: MatchControllerRef ensures an object with the same
+                      controller reference as the selecting object is selected.
+                    type: boolean
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: MatchLabels ensures an object with matching labels
+                      is selected.
+                    type: object
+                type: object
               deletionPolicy:
                 default: Delete
                 description: DeletionPolicy specifies what will happen to the underlying
@@ -64,84 +91,18 @@ spec:
                 - Orphan
                 - Delete
                 type: string
-              forProvider:
-                description: FirewallRuleParameters define the desired state of an
-                  Azure SQL firewall rule.
-                properties:
-                  properties:
-                    description: FirewallRuleProperties - Resource properties.
-                    properties:
-                      endIpAddress:
-                        description: EndIPAddress of the IP range this firewall rule
-                          allows.
-                        type: string
-                      startIpAddress:
-                        description: StartIPAddress of the IP range this firewall
-                          rule allows.
-                        type: string
-                    required:
-                    - endIpAddress
-                    - startIpAddress
-                    type: object
-                  resourceGroupName:
-                    description: ResourceGroupName - Name of the Firewall Rule's resource
-                      group.
-                    type: string
-                  resourceGroupNameRef:
-                    description: ResourceGroupNameRef - A reference to a ResourceGroup
-                      object to retrieve its name
-                    properties:
-                      name:
-                        description: Name of the referenced object.
-                        type: string
-                    required:
-                    - name
-                    type: object
-                  resourceGroupNameSelector:
-                    description: ResourceGroupNameSelector - Selects a ResourceGroup
-                      to reference.
-                    properties:
-                      matchControllerRef:
-                        description: MatchControllerRef ensures an object with the
-                          same controller reference as the selecting object is selected.
-                        type: boolean
-                      matchLabels:
-                        additionalProperties:
-                          type: string
-                        description: MatchLabels ensures an object with matching labels
-                          is selected.
-                        type: object
-                    type: object
-                  serverName:
-                    description: ServerName - Name of the Firewall Rule's server.
-                    type: string
-                  serverNameRef:
-                    description: ServerNameRef - A reference to the Firewall Rule's
-                      MySQLServer.
-                    properties:
-                      name:
-                        description: Name of the referenced object.
-                        type: string
-                    required:
-                    - name
-                    type: object
-                  serverNameSelector:
-                    description: ServerNameSelector - Selects a MySQLServer to reference.
-                    properties:
-                      matchControllerRef:
-                        description: MatchControllerRef ensures an object with the
-                          same controller reference as the selecting object is selected.
-                        type: boolean
-                      matchLabels:
-                        additionalProperties:
-                          type: string
-                        description: MatchLabels ensures an object with matching labels
-                          is selected.
-                        type: object
-                    type: object
-                required:
-                - properties
-                type: object
+              nodeCount:
+                description: NodeCount is the number of nodes that the cluster will
+                  initially be created with.  This can be scaled over time and defaults
+                  to 1.
+                format: int32
+                maximum: 100
+                minimum: 0
+                type: integer
+              nodeVMSize:
+                description: NodeVMSize is the name of the worker node VM size, e.g.,
+                  Standard_B2s, Standard_F2s_v2, etc.
+                type: string
               providerConfigRef:
                 default:
                   name: default
@@ -166,6 +127,64 @@ spec:
                 required:
                 - name
                 type: object
+              resourceGroupName:
+                description: ResourceGroupName is the name of the resource group that
+                  the cluster will be created in
+                type: string
+              resourceGroupNameRef:
+                description: ResourceGroupNameRef - A reference to a ResourceGroup
+                  to retrieve its name
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                required:
+                - name
+                type: object
+              resourceGroupNameSelector:
+                description: ResourceGroupNameSelector - Select a reference to a ResourceGroup
+                  to retrieve its name
+                properties:
+                  matchControllerRef:
+                    description: MatchControllerRef ensures an object with the same
+                      controller reference as the selecting object is selected.
+                    type: boolean
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: MatchLabels ensures an object with matching labels
+                      is selected.
+                    type: object
+                type: object
+              vnetSubnetID:
+                description: VnetSubnetID is the subnet to which the cluster will
+                  be deployed.
+                type: string
+              vnetSubnetIDRef:
+                description: ResourceGroupNameRef - A reference to a Subnet to retrieve
+                  its ID
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                required:
+                - name
+                type: object
+              vnetSubnetIDSelector:
+                description: ResourceGroupNameSelector - Select a reference to a Subnet
+                  to retrieve its ID
+                properties:
+                  matchControllerRef:
+                    description: MatchControllerRef ensures an object with the same
+                      controller reference as the selecting object is selected.
+                    type: boolean
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: MatchLabels ensures an object with matching labels
+                      is selected.
+                    type: object
+                type: object
               writeConnectionSecretToRef:
                 description: WriteConnectionSecretToReference specifies the namespace
                   and name of a Secret to which any connection details for this managed
@@ -183,24 +202,10 @@ spec:
                 - name
                 - namespace
                 type: object
-            required:
-            - forProvider
             type: object
           status:
-            description: A FirewallRuleStatus represents the status of an Azure SQL
-              firewall rule.
+            description: An AgentPoolStatus represents the observed state of an AKSCluster.
             properties:
-              atProvider:
-                description: A FirewallRuleObservation represents the observed state
-                  of an Azure SQL firewall rule.
-                properties:
-                  id:
-                    description: ID - Resource ID
-                    type: string
-                  type:
-                    description: Type - Resource type.
-                    type: string
-                type: object
               conditions:
                 description: Conditions of the resource.
                 items:
@@ -234,6 +239,13 @@ spec:
                   - type
                   type: object
                 type: array
+              providerID:
+                description: ProviderID is the external ID to identify this resource
+                  in the cloud provider.
+                type: string
+              state:
+                description: State is the current state of the cluster.
+                type: string
             type: object
         required:
         - spec

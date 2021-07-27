@@ -23,10 +23,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane/crossplane-runtime/pkg/reference"
+	"github.com/crossplane/crossplane-runtime/pkg/resource"
 
 	networkv1alpha3 "github.com/crossplane/provider-azure/apis/network/v1alpha3"
 	"github.com/crossplane/provider-azure/apis/v1alpha3"
 )
+
+// AKSClusterName extracts Name from the supplied managed resource, which must be
+// a AKSCluster.
+func AKSClusterName() reference.ExtractValueFn {
+	return func(mg resource.Managed) string {
+		s, ok := mg.(*AKSCluster)
+		if !ok {
+			return ""
+		}
+		return s.Name
+	}
+}
 
 // ResolveReferences of this AKSCluster.
 func (mg *AKSCluster) ResolveReferences(ctx context.Context, c client.Reader) error {
