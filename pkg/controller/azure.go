@@ -20,12 +20,12 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/crossplane/provider-azure/pkg/controller/compute/agentpool"
-
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 
 	"github.com/crossplane/provider-azure/pkg/controller/cache"
 	"github.com/crossplane/provider-azure/pkg/controller/compute"
+	"github.com/crossplane/provider-azure/pkg/controller/compute/agentpool"
+	"github.com/crossplane/provider-azure/pkg/controller/compute/containerregistry"
 	"github.com/crossplane/provider-azure/pkg/controller/compute/vm"
 	"github.com/crossplane/provider-azure/pkg/controller/config"
 	"github.com/crossplane/provider-azure/pkg/controller/database/cosmosdb"
@@ -52,6 +52,7 @@ func Setup(mgr ctrl.Manager, l logging.Logger, rl workqueue.RateLimiter) error {
 		vm.SetupVirtualMachine,
 		compute.SetupAKSCluster,
 		agentpool.SetupAgentPool,
+		containerregistry.SetupRegistry,
 		mysqlserver.Setup,
 		mysqlserverfirewallrule.Setup,
 		mysqlservervirtualnetworkrule.Setup,

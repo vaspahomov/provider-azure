@@ -114,3 +114,24 @@ func (mg *VirtualMachine) ResolveReferences(ctx context.Context, c client.Reader
 	}
 	return nil
 }
+
+// ResolveReferences of this Registry.
+func (mg *Registry) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPIResolver(c, mg)
+
+	// Resolve spec.resourceGroupName
+	rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
+		CurrentValue: mg.Spec.ResourceGroupName,
+		Reference:    mg.Spec.ResourceGroupNameRef,
+		Selector:     mg.Spec.ResourceGroupNameSelector,
+		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
+		Extract:      reference.ExternalName(),
+	})
+	if err != nil {
+		return errors.Wrap(err, "spec.resourceGroupName")
+	}
+	mg.Spec.ResourceGroupName = rsp.ResolvedValue
+	mg.Spec.ResourceGroupNameRef = rsp.ResolvedReference
+
+	return nil
+}
