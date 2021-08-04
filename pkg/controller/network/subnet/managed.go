@@ -101,9 +101,13 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	network.UpdateSubnetStatusFromAzure(s, az)
 	s.SetConditions(xpv1.Available())
 
+	needsUpdate, diff := network.SubnetNeedsUpdate(s, az)
+
 	o := managed.ExternalObservation{
 		ResourceExists:    true,
 		ConnectionDetails: managed.ConnectionDetails{},
+		ResourceUpToDate:  !needsUpdate,
+		Diff:              diff,
 	}
 
 	return o, nil
@@ -130,17 +134,9 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotSubnet)
 	}
-
-	az, err := e.client.Get(ctx, s.Spec.ResourceGroupName, s.Spec.VirtualNetworkName, meta.GetExternalName(s), "")
-	if err != nil {
-		return managed.ExternalUpdate{}, errors.Wrap(err, errGetSubnet)
-	}
-
-	if network.SubnetNeedsUpdate(s, az) {
-		snet := network.NewSubnetParameters(s)
-		if _, err := e.client.CreateOrUpdate(ctx, s.Spec.ResourceGroupName, s.Spec.VirtualNetworkName, meta.GetExternalName(s), snet); err != nil {
-			return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateSubnet)
-		}
+	snet := network.NewSubnetParameters(s)
+	if _, err := e.client.CreateOrUpdate(ctx, s.Spec.ResourceGroupName, s.Spec.VirtualNetworkName, meta.GetExternalName(s), snet); err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateSubnet)
 	}
 	return managed.ExternalUpdate{}, nil
 }

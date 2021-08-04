@@ -18,6 +18,9 @@ package network
 
 import (
 	"reflect"
+	"strings"
+
+	"github.com/google/go-cmp/cmp"
 
 	networkmgmt "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-06-01/network"
 
@@ -41,21 +44,38 @@ func NewVirtualNetworkParameters(v *v1alpha3.VirtualNetwork) networkmgmt.Virtual
 }
 
 // VirtualNetworkNeedsUpdate determines if a virtual network need to be updated
-func VirtualNetworkNeedsUpdate(kube *v1alpha3.VirtualNetwork, az networkmgmt.VirtualNetwork) bool {
+func VirtualNetworkNeedsUpdate(kube *v1alpha3.VirtualNetwork, az networkmgmt.VirtualNetwork) (bool, string) {
 	up := NewVirtualNetworkParameters(kube)
 
-	switch {
-	case !reflect.DeepEqual(up.VirtualNetworkPropertiesFormat.AddressSpace, az.VirtualNetworkPropertiesFormat.AddressSpace):
-		return true
-	case !reflect.DeepEqual(up.VirtualNetworkPropertiesFormat.EnableDdosProtection, az.VirtualNetworkPropertiesFormat.EnableDdosProtection):
-		return true
-	case !reflect.DeepEqual(up.VirtualNetworkPropertiesFormat.EnableVMProtection, az.VirtualNetworkPropertiesFormat.EnableVMProtection):
-		return true
-	case !reflect.DeepEqual(up.Tags, az.Tags):
-		return true
+	needUpdate := false
+	diff := strings.Builder{}
+	if !reflect.DeepEqual(up.VirtualNetworkPropertiesFormat.AddressSpace, az.VirtualNetworkPropertiesFormat.AddressSpace) {
+		needUpdate = true
+		diff.WriteString("AddressSpace: " + cmp.Diff(
+			up.VirtualNetworkPropertiesFormat.AddressSpace,
+			az.VirtualNetworkPropertiesFormat.AddressSpace,
+		))
+	}
+	if !reflect.DeepEqual(up.VirtualNetworkPropertiesFormat.EnableDdosProtection, az.VirtualNetworkPropertiesFormat.EnableDdosProtection) {
+		needUpdate = true
+		diff.WriteString("EnableDdosProtection: " + cmp.Diff(
+			up.VirtualNetworkPropertiesFormat.EnableDdosProtection,
+			az.VirtualNetworkPropertiesFormat.EnableDdosProtection,
+		))
+	}
+	if !reflect.DeepEqual(up.VirtualNetworkPropertiesFormat.EnableVMProtection, az.VirtualNetworkPropertiesFormat.EnableVMProtection) {
+		needUpdate = true
+		diff.WriteString("EnableVMProtection: " + cmp.Diff(
+			up.VirtualNetworkPropertiesFormat.EnableVMProtection,
+			az.VirtualNetworkPropertiesFormat.EnableVMProtection,
+		))
+	}
+	if !reflect.DeepEqual(up.Tags, az.Tags) {
+		needUpdate = true
+		diff.WriteString("Tags: " + cmp.Diff(up.Tags, az.Tags))
 	}
 
-	return false
+	return needUpdate, diff.String()
 }
 
 // UpdateVirtualNetworkStatusFromAzure updates the status related to the external
@@ -137,10 +157,12 @@ func NewInterfaceIPConfiguration(s *v1alpha3.NetworkInterface) *[]networkmgmt.In
 }
 
 // SubnetNeedsUpdate determines if a virtual network need to be updated
-func SubnetNeedsUpdate(kube *v1alpha3.Subnet, az networkmgmt.Subnet) bool {
+func SubnetNeedsUpdate(kube *v1alpha3.Subnet, az networkmgmt.Subnet) (bool, string) {
 	up := NewSubnetParameters(kube)
-
-	return !reflect.DeepEqual(up.SubnetPropertiesFormat.AddressPrefix, az.SubnetPropertiesFormat.AddressPrefix)
+	if !reflect.DeepEqual(up.SubnetPropertiesFormat.AddressPrefix, az.SubnetPropertiesFormat.AddressPrefix) {
+		return true, "AddressPrefix: " + cmp.Diff(up.SubnetPropertiesFormat.AddressPrefix, az.SubnetPropertiesFormat.AddressPrefix)
+	}
+	return false, ""
 }
 
 // UpdateSubnetStatusFromAzure updates the status related to the external
