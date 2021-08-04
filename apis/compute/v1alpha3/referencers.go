@@ -19,12 +19,10 @@ package v1alpha3
 import (
 	"context"
 
+	"github.com/crossplane/crossplane-runtime/pkg/reference"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
-
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/crossplane/crossplane-runtime/pkg/reference"
 
 	networkv1alpha3 "github.com/crossplane/provider-azure/apis/network/v1alpha3"
 	"github.com/crossplane/provider-azure/apis/v1alpha3"
@@ -113,5 +111,25 @@ func (mg *VirtualMachine) ResolveReferences(ctx context.Context, c client.Reader
 			networkInterface.NetworkInterfaceIDRef = rsp.ResolvedReference
 		}
 	}
+	return nil
+}
+
+// ResolveReferences of this Registry.
+func (mg *Registry) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPIResolver(c, mg)
+
+	// Resolve spec.resourceGroupName
+	rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
+		CurrentValue: mg.Spec.ResourceGroupName,
+		Reference:    mg.Spec.ResourceGroupNameRef,
+		Selector:     mg.Spec.ResourceGroupNameSelector,
+		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
+		Extract:      reference.ExternalName(),
+	})
+	if err != nil {
+		return errors.Wrap(err, "spec.resourceGroupName")
+	}
+	mg.Spec.ResourceGroupName = rsp.ResolvedValue
+	mg.Spec.ResourceGroupNameRef = rsp.ResolvedReference
 	return nil
 }

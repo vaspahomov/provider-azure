@@ -56,10 +56,16 @@ var (
 	VirtualMachineGroupKind        = schema.GroupKind{Group: Group, Kind: VirtualMachineKind}.String()
 	VirtualMachineKindAPIVersion   = VirtualMachineKind + "." + SchemeGroupVersion.String()
 	VirtualMachineGroupVersionKind = SchemeGroupVersion.WithKind(VirtualMachineKind)
+
+	RegistryKind             = reflect.TypeOf(Registry{}).Name()
+	RegistryGroupKind        = schema.GroupKind{Group: Group, Kind: RegistryKind}.String()
+	RegistryKindAPIVersion   = RegistryKind + "." + SchemeGroupVersion.String()
+	RegistryGroupVersionKind = SchemeGroupVersion.WithKind(RegistryKind)
 )
 
 func init() {
 	SchemeBuilder.Register(&AKSCluster{}, &AKSClusterList{})
 	SchemeBuilder.Register(&VirtualMachine{}, &VirtualMachineList{})
 	SchemeBuilder.Register(&AgentPool{}, &AgentPoolList{})
+	SchemeBuilder.Register(&Registry{}, &RegistryList{})
 }

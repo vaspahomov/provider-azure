@@ -26,6 +26,7 @@ import (
 
 	"github.com/crossplane/provider-azure/pkg/controller/cache"
 	"github.com/crossplane/provider-azure/pkg/controller/compute"
+	"github.com/crossplane/provider-azure/pkg/controller/compute/containerregistry"
 	"github.com/crossplane/provider-azure/pkg/controller/compute/vm"
 	"github.com/crossplane/provider-azure/pkg/controller/config"
 	"github.com/crossplane/provider-azure/pkg/controller/database/cosmosdb"
@@ -52,6 +53,7 @@ func Setup(mgr ctrl.Manager, l logging.Logger, rl workqueue.RateLimiter) error {
 		vm.SetupVirtualMachine,
 		compute.SetupAKSCluster,
 		agentpool.SetupAgentPool,
+		containerregistry.SetupRegistry,
 		mysqlserver.Setup,
 		mysqlserverfirewallrule.Setup,
 		mysqlservervirtualnetworkrule.Setup,
