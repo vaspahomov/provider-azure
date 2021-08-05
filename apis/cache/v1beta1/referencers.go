@@ -38,6 +38,7 @@ func (mg *Redis) ResolveReferences(ctx context.Context, c client.Reader) error {
 		Selector:     mg.Spec.ForProvider.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.forProvider.resourceGroupName")

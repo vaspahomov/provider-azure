@@ -27,3 +27,5 @@ require (
 	sigs.k8s.io/controller-runtime v0.9.2
 	sigs.k8s.io/controller-tools v0.4.0
 )
+
+replace github.com/crossplane/crossplane-runtime v0.14.1-0.20210722005935-0b469fcc77cd => github.com/vaspahomov/crossplane-runtime v0.14.1-0.20210805102243-2785d22ffef3

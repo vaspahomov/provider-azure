@@ -75,6 +75,7 @@ func (mg *VirtualNetwork) ResolveReferences(ctx context.Context, c client.Reader
 		Selector:     mg.Spec.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.resourceGroupName")
@@ -96,6 +97,7 @@ func (mg *Subnet) ResolveReferences(ctx context.Context, c client.Reader) error 
 		Selector:     mg.Spec.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.resourceGroupName")
@@ -110,6 +112,7 @@ func (mg *Subnet) ResolveReferences(ctx context.Context, c client.Reader) error 
 		Selector:     mg.Spec.VirtualNetworkNameSelector,
 		To:           reference.To{Managed: &VirtualNetwork{}, List: &VirtualNetworkList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.virtualNetworkName")
@@ -131,6 +134,7 @@ func (mg *PublicIPAddress) ResolveReferences(ctx context.Context, c client.Reade
 		Selector:     mg.Spec.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.resourceGroupName")
@@ -152,6 +156,7 @@ func (mg *NetworkInterface) ResolveReferences(ctx context.Context, c client.Read
 		Selector:     mg.Spec.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.resourceGroupName")
@@ -167,6 +172,7 @@ func (mg *NetworkInterface) ResolveReferences(ctx context.Context, c client.Read
 			Selector:     iface.PublicIPAddressIDSelector,
 			To:           reference.To{Managed: &PublicIPAddress{}, List: &PublicIPAddressList{}},
 			Extract:      PublicIPAddressID(),
+			Namespace:    mg.Namespace,
 		})
 		if err != nil {
 			return errors.Wrap(err, "spec.properties.interfaceIPConfigurations[].publicIPAddress")
@@ -183,6 +189,7 @@ func (mg *NetworkInterface) ResolveReferences(ctx context.Context, c client.Read
 			Selector:     iface.SubnetIDSelector,
 			To:           reference.To{Managed: &Subnet{}, List: &SubnetList{}},
 			Extract:      SubnetID(),
+			Namespace:    mg.Namespace,
 		})
 		if err != nil {
 			return errors.Wrap(err, "spec.properties.interfaceIPConfigurations[].subnet")

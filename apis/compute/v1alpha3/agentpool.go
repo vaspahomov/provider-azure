@@ -175,6 +175,7 @@ func (mg *AgentPool) ResolveReferences(ctx context.Context, c client.Reader) err
 		Selector:     mg.Spec.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.resourceGroupName")
@@ -189,6 +190,7 @@ func (mg *AgentPool) ResolveReferences(ctx context.Context, c client.Reader) err
 		Selector:     mg.Spec.VnetSubnetIDSelector,
 		To:           reference.To{Managed: &networkv1alpha3.Subnet{}, List: &networkv1alpha3.SubnetList{}},
 		Extract:      networkv1alpha3.SubnetID(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.vnetSubnetID")
@@ -203,6 +205,7 @@ func (mg *AgentPool) ResolveReferences(ctx context.Context, c client.Reader) err
 		Selector:     mg.Spec.AKSClusterNameSelector,
 		To:           reference.To{Managed: &AKSCluster{}, List: &AKSClusterList{}},
 		Extract:      AKSClusterName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.aksClusterName")

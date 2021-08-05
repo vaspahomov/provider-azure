@@ -129,7 +129,7 @@ func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed
 	if err := t.Track(ctx, mg); err != nil {
 		return nil, nil, errors.Wrap(err, errTrackProviderConfigUsage)
 	}
-	if err := c.Get(ctx, types.NamespacedName{Name: mg.GetProviderConfigReference().Name}, pc); err != nil {
+	if err := c.Get(ctx, types.NamespacedName{Name: mg.GetProviderConfigReference().Name, Namespace: mg.GetProviderConfigReference().Namespace}, pc); err != nil {
 		return nil, nil, errors.Wrap(err, errGetProviderConfig)
 	}
 

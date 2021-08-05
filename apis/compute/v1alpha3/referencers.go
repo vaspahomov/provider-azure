@@ -51,6 +51,7 @@ func (mg *AKSCluster) ResolveReferences(ctx context.Context, c client.Reader) er
 		Selector:     mg.Spec.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.resourceGroupName")
@@ -65,6 +66,7 @@ func (mg *AKSCluster) ResolveReferences(ctx context.Context, c client.Reader) er
 		Selector:     mg.Spec.VnetSubnetIDSelector,
 		To:           reference.To{Managed: &networkv1alpha3.Subnet{}, List: &networkv1alpha3.SubnetList{}},
 		Extract:      networkv1alpha3.SubnetID(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.vnetSubnetID")
@@ -86,6 +88,7 @@ func (mg *VirtualMachine) ResolveReferences(ctx context.Context, c client.Reader
 		Selector:     mg.Spec.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.resourceGroupName")
@@ -103,6 +106,7 @@ func (mg *VirtualMachine) ResolveReferences(ctx context.Context, c client.Reader
 				Selector:     networkInterface.NetworkInterfaceIDSelector,
 				To:           reference.To{Managed: &networkv1alpha3.NetworkInterface{}, List: &networkv1alpha3.NetworkInterfaceList{}},
 				Extract:      networkv1alpha3.NetworkInterfaceID(),
+				Namespace:    mg.Namespace,
 			})
 			if err != nil {
 				return errors.Wrap(err, "spec.properties.networkProfile.networkInterfaces[].networkInterfaceID")
@@ -125,6 +129,7 @@ func (mg *Registry) ResolveReferences(ctx context.Context, c client.Reader) erro
 		Selector:     mg.Spec.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.resourceGroupName")

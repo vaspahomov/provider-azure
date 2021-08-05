@@ -40,6 +40,7 @@ func (mg *MySQLServerVirtualNetworkRule) ResolveReferences(ctx context.Context, 
 		Selector:     mg.Spec.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.resourceGroupName")
@@ -54,6 +55,7 @@ func (mg *MySQLServerVirtualNetworkRule) ResolveReferences(ctx context.Context, 
 		Selector:     mg.Spec.VirtualNetworkSubnetIDSelector,
 		To:           reference.To{Managed: &networkv1alpha3.Subnet{}, List: &networkv1alpha3.SubnetList{}},
 		Extract:      networkv1alpha3.SubnetID(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.virtualNetworkSubnetId")
@@ -68,6 +70,7 @@ func (mg *MySQLServerVirtualNetworkRule) ResolveReferences(ctx context.Context, 
 		Selector:     mg.Spec.ServerNameSelector,
 		To:           reference.To{Managed: &v1beta1.MySQLServer{}, List: &v1beta1.MySQLServerList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.serverName")
@@ -89,6 +92,7 @@ func (mg *PostgreSQLServerVirtualNetworkRule) ResolveReferences(ctx context.Cont
 		Selector:     mg.Spec.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.resourceGroupName")
@@ -103,6 +107,7 @@ func (mg *PostgreSQLServerVirtualNetworkRule) ResolveReferences(ctx context.Cont
 		Selector:     mg.Spec.VirtualNetworkSubnetIDSelector,
 		To:           reference.To{Managed: &networkv1alpha3.Subnet{}, List: &networkv1alpha3.SubnetList{}},
 		Extract:      networkv1alpha3.SubnetID(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.virtualNetworkSubnetId")
@@ -117,6 +122,7 @@ func (mg *PostgreSQLServerVirtualNetworkRule) ResolveReferences(ctx context.Cont
 		Selector:     mg.Spec.ServerNameSelector,
 		To:           reference.To{Managed: &v1beta1.PostgreSQLServer{}, List: &v1beta1.PostgreSQLServerList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.serverName")
@@ -138,6 +144,7 @@ func (mg *MySQLServerFirewallRule) ResolveReferences(ctx context.Context, c clie
 		Selector:     mg.Spec.ForProvider.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.forProvider.resourceGroupName")
@@ -152,6 +159,7 @@ func (mg *MySQLServerFirewallRule) ResolveReferences(ctx context.Context, c clie
 		Selector:     mg.Spec.ForProvider.ServerNameSelector,
 		To:           reference.To{Managed: &v1beta1.MySQLServer{}, List: &v1beta1.MySQLServerList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.forProvider.serverName")
@@ -173,6 +181,7 @@ func (mg *PostgreSQLServerFirewallRule) ResolveReferences(ctx context.Context, c
 		Selector:     mg.Spec.ForProvider.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.forProvider.resourceGroupName")
@@ -187,6 +196,7 @@ func (mg *PostgreSQLServerFirewallRule) ResolveReferences(ctx context.Context, c
 		Selector:     mg.Spec.ForProvider.ServerNameSelector,
 		To:           reference.To{Managed: &v1beta1.PostgreSQLServer{}, List: &v1beta1.PostgreSQLServerList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.forProvider.serverName")
@@ -208,6 +218,7 @@ func (mg *CosmosDBAccount) ResolveReferences(ctx context.Context, c client.Reade
 		Selector:     mg.Spec.ForProvider.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.forProvider.resourceGroupName")

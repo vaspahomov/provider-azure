@@ -38,6 +38,7 @@ func (mg *MySQLServer) ResolveReferences(ctx context.Context, c client.Reader) e
 		Selector:     mg.Spec.ForProvider.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.forProvider.resourceGroupName")
@@ -59,6 +60,7 @@ func (mg *PostgreSQLServer) ResolveReferences(ctx context.Context, c client.Read
 		Selector:     mg.Spec.ForProvider.ResourceGroupNameSelector,
 		To:           reference.To{Managed: &v1alpha3.ResourceGroup{}, List: &v1alpha3.ResourceGroupList{}},
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.Namespace,
 	})
 	if err != nil {
 		return errors.Wrap(err, "spec.forProvider.resourceGroupName")
